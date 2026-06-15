@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Critical Path — Executive Summary</title>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #ffffff;
+    --bg2:       #f5f4f0;
+    --bg3:       #eeedea;
+    --border:    rgba(60,60,55,0.12);
+    --border-md: rgba(60,60,55,0.22);
+    --text:      #1a1a18;
+    --text2:     #5a5a55;
+    --text3:     #9a9a93;
+    --radius:    8px;
+    --radius-lg: 12px;
+    --today:     #E24B4A;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:        #1c1c1a;
+      --bg2:       #252523;
+      --bg3:       #2e2e2b;
+      --border:    rgba(255,255,255,0.10);
+      --border-md: rgba(255,255,255,0.18);
+      --text:      #e8e8e2;
+      --text2:     #a8a8a0;
+      --text3:     #686860;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── Page Shell ── */
+  .page { max-width: 1100px; margin: 0 auto; padding: 40px 32px 60px; }
+
+  /* ── Top Header ── */
+  .page-header { margin-bottom: 28px; border-bottom: 0.5px solid var(--border-md); padding-bottom: 20px; }
+  .page-header h1 { font-size: 22px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .page-header .meta { font-size: 13px; color: var(--text3); }
+  .page-header .meta span { color: var(--today); font-weight: 500; }
+
+  /* ── Stat Cards ── */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 28px; }
+  .stat { background: var(--bg2); border-radius: var(--radius); padding: 12px 14px; }
+  .stat.urgent { border: 1px solid #A32D2D; }
+  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-value { font-size: 24px; font-weight: 500; color: var(--text); }
+  .stat.urgent .stat-label,
+  .stat.urgent .stat-value { color: #A32D2D; }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .stat.urgent .stat-sub { color: #A32D2D; }
+
+  /* ── Legend ── */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 11px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    border: 0.5px solid;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .pill-katie { background:#EEEDFE; color:#3C3489; border-color:#AFA9EC; }
+  .pill-kim   { background:#E1F5EE; color:#085041; border-color:#5DCAA5; }
+  .pill-jen   { background:#FAECE7; color:#712B13; border-color:#F0997B; }
+  .pill-jesse { background:#FAEEDA; color:#633806; border-color:#EF9F27; }
+  .pill-all   { background:#F1EFE8; color:#444441; border-color:#B4B2A9; }
+  .pill-launch{ background:#FCEBEB; color:#A32D2D; border-color:#F09595; }
+  .dot-katie  { background:#7F77DD; }
+  .dot-kim    { background:#1D9E75; }
+  .dot-jen    { background:#D85A30; }
+  .dot-jesse  { background:#BA7517; }
+  .dot-all    { background:#888780; }
+  .dot-launch { background:#E24B4A; }
+
+  /* ── Today badge ── */
+  .today-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #FCEBEB; color: #A32D2D; border: 0.5px solid #F09595;
+    border-radius: 20px; padding: 4px 11px; font-size: 12px; font-weight: 500;
+  }
+
+  /* ── Gantt ── */
+  .gantt-wrap { overflow-x: auto; }
+  .gantt { min-width: 680px; }
+
+  .gantt-header-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    margin-bottom: 4px;
+  }
+  .week-ruler {
+    position: relative;
+    height: 20px;
+  }
+  .week-tick {
+    position: absolute;
+    font-size: 10px;
+    color: var(--text3);
+    white-space: nowrap;
+    transform: translateX(-50%);
+    top: 2px;
+  }
+
+  .section-label {
+    font-size: 11px; font-weight: 500; color: var(--text2);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin: 14px 0 5px 0;
+    padding-left: 2px;
+  }
+
+  .gantt-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    align-items: center;
+    margin-bottom: 4px;
+    min-height: 32px;
+  }
+
+  .row-label { padding-right: 12px; }
+  .row-label strong { font-size: 12px; font-weight: 500; color: var(--text); display: block; }
+  .row-label small  { font-size: 11px; color: var(--text3); display: block; }
+
+  .track {
+    position: relative;
+    height: 28px;
+    background: var(--bg2);
+    border-radius: 4px;
+    overflow: visible;
+  }
+
+  .grid-line {
+    position: absolute; top: 0; bottom: 0;
+    width: 0.5px; background: var(--border);
+    pointer-events: none;
+  }
+
+  .bar {
+    position: absolute; top: 4px; height: 20px;
+    border-radius: 4px;
+    display: flex; align-items: center;
+    padding: 0 6px;
+    font-size: 10px; font-weight: 500;
+    white-space: nowrap; overflow: hidden;
+    transition: opacity 0.15s;
+    cursor: default;
+    min-width: 4px;
+  }
+  .bar:hover { opacity: 0.82; }
+
+  .bar-katie  { background:#EEEDFE; border:1px solid #AFA9EC; color:#3C3489; }
+  .bar-kim    { background:#E1F5EE; border:1px solid #5DCAA5; color:#085041; }
+  .bar-jen    { background:#FAECE7; border:1px solid #F0997B; color:#712B13; }
+  .bar-jesse  { background:#FAEEDA; border:1px solid #EF9F27; color:#633806; }
+  .bar-all    { background:#F1EFE8; border:1px solid #B4B2A9; color:#444441; }
+  .bar-launch { background:#E24B4A; border:1px solid #A32D2D; color:#fff; }
+
+  .today-line {
+    position: absolute; top: -4px; bottom: -4px;
+    width: 2px; background: var(--today);
+    pointer-events: none; z-index: 20;
+    border-radius: 1px;
+  }
+  .today-tip {
+    position: absolute; bottom: calc(100% + 4px);
+    transform: translateX(-50%);
+    background: var(--today); color: #fff;
+    font-size: 9px; font-weight: 600;
+    padding: 2px 5px; border-radius: 3px;
+    white-space: nowrap; letter-spacing: 0.04em;
+  }
+
+  .divider { border: none; border-top: 0.5px solid var(--border); margin: 6px 0; }
+
+  /* ── Executive Summary Block ── */
+  .exec-summary {
+    background: var(--bg2);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-top: 32px;
+    border: 0.5px solid var(--border);
+  }
+  .exec-summary h2 { font-size: 14px; font-weight: 500; margin-bottom: 12px; color: var(--text); }
+  .exec-summary p  { font-size: 13px; color: var(--text2); margin-bottom: 10px; line-height: 1.65; }
+  .exec-summary ul { padding-left: 18px; }
+  .exec-summary li { font-size: 13px; color: var(--text2); margin-bottom: 8px; line-height: 1.6; }
+  .exec-summary li strong { color: var(--text); font-weight: 500; }
+
+  /* ── Footer ── */
+  .footer { margin-top: 32px; font-size: 11px; color: var(--text3); border-top: 0.5px solid var(--border); padding-top: 14px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    .page { padding: 20px 16px 40px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .page-header h1 { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Critical Path — Executive Summary</h1>
+    <div class="meta">
+      Project window: Jun 15, 2026 – Sep 20, 2026 &nbsp;|&nbsp;
+      Today: <span id="today-display"></span> &nbsp;|&nbsp;
+      Hard launch: Sep 20, 2026
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Total duration</div>
+      <div class="stat-value">15 wks</div>
+      <div class="stat-sub">Jun 15 → Sep 20</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Named owners</div>
+      <div class="stat-value">4</div>
+      <div class="stat-sub">No backup coverage</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Estimated hours</div>
+      <div class="stat-value">~570</div>
+      <div class="stat-sub">Across all tasks</div>
+    </div>
+    <div class="stat urgent">
+      <div class="stat-label">Hard launch</div>
+      <div class="stat-value">Sep 20</div>
+      <div class="stat-sub">Zero float in final sprint</div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <span class="pill pill-katie"><span class="dot dot-katie"></span>Katie Connor</span>
+    <span class="pill pill-kim"><span class="dot dot-kim"></span>Kim Munoz</span>
+    <span class="pill pill-jen"><span class="dot dot-jen"></span>Jennifer Lin</span>
+    <span class="pill pill-jesse"><span class="dot dot-jesse"></span>Jesse Deutsch</span>
+    <span class="pill pill-all"><span class="dot dot-all"></span>All team</span>
+    <span class="today-badge">&#9679; Today</span>
+  </div>
+
+  <!-- Gantt -->
+  <div class="gantt-wrap">
+    <div class="gantt" id="gantt"></div>
+  </div>
+
+  <!-- Executive Summary -->
+  <div class="exec-summary">
+    <h2>What the executive team needs to know</h2>
+    <p>We have 15 weeks to hit a hard September 20 launch. Four people own every task on this path, and none of them has a backup. The red line shows today. Anything to its left should be done. Anything to its right is still ahead.</p>
+    <ul>
+      <li><strong>Katie Connor</strong> carries all enrollment logic through early July. If she is not protected at 25% allocation starting June 15, every downstream task, PIR, MBI, all of it, gets pushed.</li>
+      <li><strong>Kim Munoz</strong> runs health, DMH, and role-type work in a tight chain. Her final DMH deliverable (by July 5) is a hard blocker for Jennifer Lin, Jesse Deutsch, and the Playground setup.</li>
+      <li><strong>Jennifer Lin</strong> is the heaviest bottleneck. She owns data migration (which gates nearly everything else), three MVP reports, both PIR sections, and five consecutive MBI modules from mid-July through mid-August. She has no gaps in that stretch.</li>
+      <li><strong>Jesse Deutsch</strong> has one task (the feedback list, 20 hours) in a single week. It cannot start until Kim's DMH work is complete.</li>
+    </ul>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer" id="footer-note">
+    Today's line updates automatically each time this file is opened. To update task data, edit the <code>sections</code> array in the script at the bottom of this file.
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────
+//  CONFIG — edit this to update the chart
+// ─────────────────────────────────────────
+
+// Chart window
+const CHART_START = new Date('2026-06-09'); // Monday before project start (for visual padding)
+const TOTAL_WEEKS = 16;                     // weeks shown on chart
+const TOTAL_DAYS  = TOTAL_WEEKS * 7;
+
+// Task data
+const sections = [
+  {
+    label: "Enrollment Logic — Katie Connor",
+    rows: [
+      { label: "Same Child / Different Records", sub: "Design, breakout, health, education, PIR implications", start: "2026-06-15", end: "2026-07-05", owner: "katie" },
+      { label: "OFA Design (same center, same PY)", sub: "Two-record scenario", start: "2026-06-22", end: "2026-06-28", owner: "katie" },
+    ]
+  },
+  {
+    label: "Health, Education & DMH Logic — Kim Munoz",
+    rows: [
+      { label: "Health & Education requirements", sub: "Final requirements set", start: "2026-06-15", end: "2026-06-21", owner: "kim" },
+      { label: "Screening status logic", sub: "Testing implications on reports", start: "2026-06-22", end: "2026-06-28", owner: "kim" },
+      { label: "DMH final requirements", sub: "CP-03", start: "2026-06-22", end: "2026-06-28", owner: "kim" },
+      { label: "DMH testing", sub: "CP-03 testing", start: "2026-06-29", end: "2026-07-05", owner: "kim" },
+      { label: "Role types / Playground", sub: "Define template role types", start: "2026-07-06", end: "2026-07-12", owner: "kim" },
+    ]
+  },
+  {
+    label: "Data Migration — Jennifer Lin",
+    rows: [
+      { label: "Initial mapping", sub: "20 hrs — gates nearly everything", start: "2026-06-11", end: "2026-06-24", owner: "jen" },
+      { label: "Additional mapping", sub: "New dev scope", start: "2026-06-25", end: "2026-07-01", owner: "jen" },
+    ]
+  },
+  {
+    label: "MVP Reports — Jennifer Lin",
+    rows: [
+      { label: "E201, EOM, Others", sub: "Three reports in parallel", start: "2026-06-25", end: "2026-07-01", owner: "jen" },
+    ]
+  },
+  {
+    label: "PIR — Jennifer Lin",
+    rows: [
+      { label: "PIR Section A", sub: "Needs enrollment + migration complete", start: "2026-07-06", end: "2026-07-12", owner: "jen" },
+      { label: "PIR Section C", sub: "Needs health/DMH + migration complete", start: "2026-07-06", end: "2026-07-12", owner: "jen" },
+    ]
+  },
+  {
+    label: "MBI — Jennifer Lin",
+    rows: [
+      { label: "MBI ERSEA", sub: "All upstream tasks must clear first", start: "2026-07-13", end: "2026-07-19", owner: "jen" },
+      { label: "MBI Health", sub: "Follows ERSEA", start: "2026-07-20", end: "2026-07-26", owner: "jen" },
+      { label: "MBI Family Services", sub: "Follows Health", start: "2026-07-27", end: "2026-08-02", owner: "jen" },
+      { label: "MBI DMH", sub: "Follows Family Services", start: "2026-08-03", end: "2026-08-09", owner: "jen" },
+      { label: "MBI Education", sub: "Final MBI step", start: "2026-08-10", end: "2026-08-16", owner: "jen" },
+    ]
+  },
+  {
+    label: "Feedback List — Jesse Deutsch",
+    rows: [
+      { label: "Feedback review and action", sub: "20 hrs — starts after DMH complete", start: "2026-07-06", end: "2026-07-12", owner: "jesse" },
+    ]
+  },
+  {
+    label: "September Launch — All Hands",
+    rows: [
+      { label: "Final tests, features, feedback", sub: "5-week sprint to launch — zero float", start: "2026-08-17", end: "2026-09-20", owner: "all", isLaunch: true },
+    ]
+  }
+];
+
+// ─────────────────────────────────────────
+//  RENDERING — no need to edit below here
+// ─────────────────────────────────────────
+
+function dayOffset(dateStr) {
+  return (new Date(dateStr) - CHART_START) / 86400000;
+}
+function toPct(days) {
+  return Math.max(0, Math.min(100, (days / TOTAL_DAYS) * 100));
+}
+
+// Live today
+const today = new Date();
+const todayStr = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+document.getElementById('today-display').textContent = todayStr;
+const todayOffset = (today - CHART_START) / 86400000;
+
+// Week labels
+const gantt = document.getElementById('gantt');
+
+const headerRow = document.createElement('div');
+headerRow.className = 'gantt-header-row';
+headerRow.innerHTML = '<div></div>';
+const ruler = document.createElement('div');
+ruler.className = 'week-ruler';
+for (let i = 0; i <= TOTAL_WEEKS; i++) {
+  const d = new Date(CHART_START);
+  d.setDate(d.getDate() + i * 7);
+  if (i % 2 === 0) { // show every other week to avoid crowding
+    const tick = document.createElement('div');
+    tick.className = 'week-tick';
+    tick.style.left = toPct(i * 7) + '%';
+    tick.textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    ruler.appendChild(tick);
+  }
+}
+headerRow.appendChild(ruler);
+gantt.appendChild(headerRow);
+
+sections.forEach(section => {
+  const sl = document.createElement('div');
+  sl.className = 'section-label';
+  sl.textContent = section.label;
+  gantt.appendChild(sl);
+
+  section.rows.forEach(row => {
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'gantt-row';
+
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'row-label';
+    labelDiv.innerHTML = `<strong>${row.label}</strong><small>${row.sub}</small>`;
+
+    const track = document.createElement('div');
+    track.className = 'track';
+
+    // Grid lines
+    for (let i = 0; i <= TOTAL_WEEKS; i++) {
+      const gl = document.createElement('div');
+      gl.className = 'grid-line';
+      gl.style.left = toPct(i * 7) + '%';
+      track.appendChild(gl);
+    }
+
+    // Bar
+    const startDay = dayOffset(row.start);
+    const endDay   = dayOffset(row.end) + 1;
+    const leftPct  = toPct(startDay);
+    const widthPct = toPct(endDay - startDay);
+
+    const bar = document.createElement('div');
+    bar.className = `bar bar-${row.isLaunch ? 'launch' : row.owner}`;
+    bar.style.left  = leftPct + '%';
+    bar.style.width = widthPct + '%';
+    bar.title = `${row.label}\n${row.start} → ${row.end}\n${row.sub}`;
+    if (widthPct > 5) {
+      bar.textContent = row.label;
+    }
+    track.appendChild(bar);
+
+    // Today line (only if within chart range)
+    if (todayOffset >= 0 && todayOffset <= TOTAL_DAYS) {
+      const tl = document.createElement('div');
+      tl.className = 'today-line';
+      tl.style.left = toPct(todayOffset) + '%';
+      const tip = document.createElement('div');
+      tip.className = 'today-tip';
+      tip.textContent = 'TODAY';
+      tl.appendChild(tip);
+      track.appendChild(tl);
+    }
+
+    rowDiv.appendChild(labelDiv);
+    rowDiv.appendChild(track);
+    gantt.appendChild(rowDiv);
+  });
+
+  const hr = document.createElement('hr');
+  hr.className = 'divider';
+  gantt.appendChild(hr);
+});
+</script>
+</body>
+</html>
