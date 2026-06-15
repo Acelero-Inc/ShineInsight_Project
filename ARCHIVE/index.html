@@ -167,20 +167,6 @@
   .bar-all    { background:#F1EFE8; border:1px solid #B4B2A9; color:#444441; }
   .bar-launch { background:#E24B4A; border:1px solid #A32D2D; color:#fff; }
 
-  /* Unavailable / PTO bar — diagonal stripe */
-  .bar-pto {
-    background: repeating-linear-gradient(
-      45deg,
-      #e2e0db,
-      #e2e0db 4px,
-      #f5f4f0 4px,
-      #f5f4f0 10px
-    );
-    border: 1px dashed #aaa9a3;
-    color: #6b6b65;
-    font-style: italic;
-  }
-
   .today-line {
     position: absolute; top: -4px; bottom: -4px;
     width: 2px; background: var(--today);
@@ -267,7 +253,6 @@
     <span class="pill pill-jen"><span class="dot dot-jen"></span>Jennifer Lin</span>
     <span class="pill pill-jesse"><span class="dot dot-jesse"></span>Jesse Deutsch</span>
     <span class="pill pill-all"><span class="dot dot-all"></span>All team</span>
-    <span class="pill" style="background:#f5f4f0;color:#6b6b65;border:0.5px dashed #aaa9a3;"><span class="dot" style="background:#aaa9a3;"></span>Unavailable / PTO</span>
     <span class="today-badge">&#9679; Today</span>
   </div>
 
@@ -302,19 +287,11 @@
 
 // Chart window
 const CHART_START = new Date('2026-06-09'); // Monday before project start (for visual padding)
-const TOTAL_WEEKS = 20;                     // weeks shown on chart — extended to cover Oct PTO
+const TOTAL_WEEKS = 16;                     // weeks shown on chart
 const TOTAL_DAYS  = TOTAL_WEEKS * 7;
 
 // Task data
 const sections = [
-  {
-    label: "Unavailable — PTO & Conflicts",
-    rows: [
-      { label: "Jennifer Lin — PTO", sub: "Katie Connor covering: PIR Sections A & C", start: "2026-07-02", end: "2026-07-12", owner: "pto" },
-      { label: "Jesse Deutsch — PTO", sub: "Post-launch", start: "2026-08-17", end: "2026-08-21", owner: "pto" },
-      { label: "Jesse Deutsch — PTO", sub: "Post-launch", start: "2026-10-13", end: "2026-10-21", owner: "pto" },
-    ]
-  },
   {
     label: "Enrollment Logic — Katie Connor",
     rows: [
@@ -372,14 +349,6 @@ const sections = [
     label: "September Launch — All Hands",
     rows: [
       { label: "Final tests, features, feedback", sub: "5-week sprint to launch — zero float", start: "2026-08-17", end: "2026-09-20", owner: "all", isLaunch: true },
-    ]
-  },
-  {
-    label: "Unavailable — PTO & Conflicts",
-    rows: [
-      { label: "Jennifer Lin — PTO", sub: "Katie Connor covering: PIR Sections A & C", start: "2026-07-02", end: "2026-07-12", owner: "pto" },
-      { label: "Jesse Deutsch — PTO", sub: "Post-launch", start: "2026-08-17", end: "2026-08-21", owner: "pto" },
-      { label: "Jesse Deutsch — PTO", sub: "Post-launch", start: "2026-10-13", end: "2026-10-21", owner: "pto" },
     ]
   }
 ];
@@ -459,7 +428,9 @@ sections.forEach(section => {
     bar.style.left  = leftPct + '%';
     bar.style.width = widthPct + '%';
     bar.title = `${row.label}\n${row.start} → ${row.end}\n${row.sub}`;
-    bar.textContent = row.label;
+    if (widthPct > 5) {
+      bar.textContent = row.label;
+    }
     track.appendChild(bar);
 
     // Today line (only if within chart range)
