@@ -198,40 +198,6 @@
 
   .divider { border: none; border-top: 0.5px solid var(--border); margin: 6px 0; }
 
-  /* ── Launch section highlight ── */
-  .section-label-launch {
-    font-size: 12px; font-weight: 700; color: #A32D2D;
-    text-transform: uppercase; letter-spacing: 0.08em;
-    margin: 20px 0 6px 0;
-    padding: 8px 12px;
-    background: #FCEBEB;
-    border-left: 4px solid #E24B4A;
-    border-radius: 0 4px 4px 0;
-  }
-  .launch-section-wrap {
-    background: #fff8f8;
-    border: 1px solid #F0BFBF;
-    border-radius: 8px;
-    padding: 8px 10px 4px 10px;
-    margin-bottom: 6px;
-  }
-  .bar-launch {
-    background: linear-gradient(90deg, #C0392B, #E24B4A) !important;
-    border: 1px solid #A32D2D !important;
-    color: #fff !important;
-    font-size: 11px !important;
-    font-weight: 600 !important;
-    box-shadow: 0 2px 6px rgba(226,75,74,0.35);
-    top: 2px !important;
-    height: 24px !important;
-  }
-  .track-launch {
-    height: 34px;
-    background: rgba(252,235,235,0.5);
-  }
-  .row-label-launch strong { color: #A32D2D !important; font-size: 13px !important; }
-  .row-label-launch small  { color: #C0392B !important; }
-
   /* ── Executive Summary Block ── */
   .exec-summary {
     background: var(--bg2);
@@ -264,9 +230,9 @@
   <div class="page-header">
     <h1>Critical Path — Executive Summary</h1>
     <div class="meta">
-      Project window: Jun 15, 2026 – Sep 30, 2026 &nbsp;|&nbsp;
+      Project window: Jun 15, 2026 – Sep 20, 2026 &nbsp;|&nbsp;
       Today: <span id="today-display"></span> &nbsp;|&nbsp;
-      First Go-Live: Sep 30, 2026
+      Hard launch: Sep 20, 2026
     </div>
   </div>
 
@@ -274,8 +240,8 @@
   <div class="stats">
     <div class="stat">
       <div class="stat-label">Total duration</div>
-      <div class="stat-value">16 wks</div>
-      <div class="stat-sub">Jun 15 → Sep 30</div>
+      <div class="stat-value">15 wks</div>
+      <div class="stat-sub">Jun 15 → Sep 20</div>
     </div>
     <div class="stat">
       <div class="stat-label">Named owners</div>
@@ -288,8 +254,8 @@
       <div class="stat-sub">Across all tasks</div>
     </div>
     <div class="stat urgent">
-      <div class="stat-label">First Go-Live</div>
-      <div class="stat-value">Sep 30</div>
+      <div class="stat-label">Hard launch</div>
+      <div class="stat-value">Sep 20</div>
       <div class="stat-sub">Zero float in final sprint</div>
     </div>
   </div>
@@ -313,7 +279,7 @@
   <!-- Executive Summary -->
   <div class="exec-summary">
     <h2>What the executive team needs to know</h2>
-    <p>We have 16 weeks to hit our First Go-Live on September 30. Four people own every task on this path, and none of them has a backup. The red line shows today. Anything to its left should be done. Anything to its right is still ahead.</p>
+    <p>We have 15 weeks to hit a hard September 20 launch. Four people own every task on this path, and none of them has a backup. The red line shows today. Anything to its left should be done. Anything to its right is still ahead.</p>
     <ul>
       <li><strong>Katie Connor</strong> carries all enrollment logic through early July. If she is not protected at 25% allocation starting June 15, every downstream task, PIR, MBI, all of it, gets pushed.</li>
       <li><strong>Kim Munoz</strong> runs health, DMH, and role-type work in a tight chain. Her final DMH deliverable (by July 5) is a hard blocker for Jennifer Lin, Jesse Deutsch, and the Playground setup.</li>
@@ -341,6 +307,14 @@ const TOTAL_DAYS  = TOTAL_WEEKS * 7;
 
 // Task data
 const sections = [
+  {
+    label: "Unavailable — PTO & Conflicts",
+    rows: [
+      { label: "Jennifer Lin — PTO", sub: "Katie Connor covering: PIR Sections A & C", start: "2026-07-02", end: "2026-07-12", owner: "pto" },
+      { label: "Jesse Deutsch — PTO", sub: "Post-launch", start: "2026-08-17", end: "2026-08-21", owner: "pto" },
+      { label: "Jesse Deutsch — PTO", sub: "Post-launch", start: "2026-10-13", end: "2026-10-21", owner: "pto" },
+    ]
+  },
   {
     label: "Enrollment Logic — Katie Connor",
     rows: [
@@ -397,7 +371,7 @@ const sections = [
   {
     label: "September Launch — All Hands",
     rows: [
-      { label: "Final tests, features, feedback", sub: "5-week sprint to First Go-Live — zero float", start: "2026-08-17", end: "2026-09-30", owner: "all", isLaunch: true },
+      { label: "Final tests, features, feedback", sub: "5-week sprint to launch — zero float", start: "2026-08-17", end: "2026-09-20", owner: "all", isLaunch: true },
     ]
   },
   {
@@ -450,31 +424,21 @@ headerRow.appendChild(ruler);
 gantt.appendChild(headerRow);
 
 sections.forEach(section => {
-  const isLaunchSection = section.label.startsWith('September Launch');
-
   const sl = document.createElement('div');
-  sl.className = isLaunchSection ? 'section-label-launch' : 'section-label';
+  sl.className = 'section-label';
   sl.textContent = section.label;
   gantt.appendChild(sl);
-
-  // Wrap launch section rows in a highlight container
-  const sectionWrap = isLaunchSection ? document.createElement('div') : null;
-  if (sectionWrap) {
-    sectionWrap.className = 'launch-section-wrap';
-    gantt.appendChild(sectionWrap);
-  }
-  const rowTarget = sectionWrap || gantt;
 
   section.rows.forEach(row => {
     const rowDiv = document.createElement('div');
     rowDiv.className = 'gantt-row';
 
     const labelDiv = document.createElement('div');
-    labelDiv.className = row.isLaunch ? 'row-label row-label-launch' : 'row-label';
+    labelDiv.className = 'row-label';
     labelDiv.innerHTML = `<strong>${row.label}</strong><small>${row.sub}</small>`;
 
     const track = document.createElement('div');
-    track.className = row.isLaunch ? 'track track-launch' : 'track';
+    track.className = 'track';
 
     // Grid lines
     for (let i = 0; i <= TOTAL_WEEKS; i++) {
@@ -512,7 +476,7 @@ sections.forEach(section => {
 
     rowDiv.appendChild(labelDiv);
     rowDiv.appendChild(track);
-    rowTarget.appendChild(rowDiv);
+    gantt.appendChild(rowDiv);
   });
 
   const hr = document.createElement('hr');
